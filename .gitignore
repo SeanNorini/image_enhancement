@@ -1,0 +1,8 @@
+.idea
+.venv
+*.lock
+output/*
+images/*
+*.pth
+*.onnx
+*.safetensors
