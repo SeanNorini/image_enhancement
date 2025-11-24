@@ -35,9 +35,8 @@ class Upscaler:
 
     def _render(
         self,
-        x,
+        x: Tensor,
         model_variant: str,
-        enable_amp: bool,
     ) -> Tensor:
         model = self._load_model(model_variant)
         x = F.pad(x, (model.pre_pad,) * 4, "constant", 1)
