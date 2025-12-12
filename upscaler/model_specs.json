@@ -20,6 +20,13 @@
             "model_args": {}
         }
     },
+  "Real_ESRGAN_Anime": {
+        "load": {
+            "download_url": "https://huggingface.co/smnorini/Real_ESRGAN_Anime/resolve/main/Real_ESRGAN_Anime.pth",
+            "arch": "Spandrel",
+            "model_args": {}
+        }
+    },
 
     "Real_CUGAN_4x": {
         "load": {
