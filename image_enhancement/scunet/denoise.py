@@ -1,13 +1,17 @@
 from pathlib import Path
-import numpy as np
 import torch
 
 from .io import image_to_tensor, tensor_to_rgb
 from .model.network_scunet import SCUNet
 from ..common.download_model import download_model
 
+_MODEL = None
 
 def load_model(model_name, model_path, device, n_channels: int = 3):
+    global _MODEL
+    if _MODEL:
+        return _MODEL
+
     model = SCUNet(in_nc=n_channels, config=[4, 4, 4, 4, 4, 4, 4], dim=64)
 
     if not model_path.exists():
@@ -18,7 +22,8 @@ def load_model(model_name, model_path, device, n_channels: int = 3):
 
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
-    return model.to(device)
+    _MODEL = model.to(device)
+    return model
 
 
 def get_model_path(strength: int) -> Path:
@@ -32,6 +37,8 @@ def denoise(img, strength: int = 15):
     model_path = get_model_path(strength)
     model = load_model(f"scunet_color_{strength}", model_path, device)
     img = image_to_tensor(img).to(device)
-    with torch.no_grad():
+    with torch.inference_mode():
         out = model(img)
-    return tensor_to_rgb(out)
+    result = tensor_to_rgb(out)
+    del img, out
+    return result
