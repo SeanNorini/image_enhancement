@@ -5,6 +5,7 @@ import torch
 from numpy.typing import NDArray
 from torch import Tensor
 import torch.nn.functional as F
+import cv2 as cv
 
 from image_enhancement.upscaler.io import image_to_tensor, tensor_to_rgb
 from image_enhancement.upscaler.models.loader import ExtendedModelLoader
@@ -72,7 +73,10 @@ class Upscaler:
 
 
 def upscale(
-    img: NDArray[np.uint8], model_name: str, target_size: int = 0
+    img: NDArray[np.uint8],
+    model_name: str,
+    target_size: int = 0,
+    interpolation: int = cv.INTER_CUBIC,
 ) -> NDArray[np.uint8]:
     upscaler = _get_upscaler()
     curr_size = -1
@@ -81,7 +85,7 @@ def upscale(
         curr_size = max(img.shape[:2])
 
     if target_size != 0 and curr_size > target_size:
-        img = resize(img, target_size)
+        img = resize(img, target_size, interpolation)
 
     return img.astype(np.uint8)
 
