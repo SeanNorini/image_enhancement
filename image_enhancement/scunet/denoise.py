@@ -5,12 +5,13 @@ from .io import image_to_tensor, tensor_to_rgb
 from .model.network_scunet import SCUNet
 from ..common.download_model import download_model
 
-_MODEL = None
+_MODELS = {}
+
 
 def load_model(model_name, model_path, device, n_channels: int = 3):
-    global _MODEL
-    if _MODEL:
-        return _MODEL
+    global _MODELS
+    if model_name in _MODELS:
+        return _MODELS[model_name]
 
     model = SCUNet(in_nc=n_channels, config=[4, 4, 4, 4, 4, 4, 4], dim=64)
 
@@ -22,7 +23,7 @@ def load_model(model_name, model_path, device, n_channels: int = 3):
 
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
-    _MODEL = model.to(device)
+    _MODELS[model_name] = model.to(device)
     return model
 
 
