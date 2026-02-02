@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from pathlib import Path
 import torch
 
@@ -6,6 +7,29 @@ from .model.network_scunet import SCUNet
 from ..common.download_model import download_model
 
 _MODELS = {}
+
+
+class DenoiseModel(Enum):
+    GRAY_15 = auto()
+    GRAY_25 = auto()
+    GRAY_50 = auto()
+    COLOR_15 = auto()
+    COLOR_25 = auto()
+    COLOR_50 = auto()
+    PSNR = auto()
+    GAN = auto()
+
+
+_MODEL_NAMES = {
+    DenoiseModel.GRAY_15: "scunet_gray_15",
+    DenoiseModel.GRAY_25: "scunet_gray_25",
+    DenoiseModel.GRAY_50: "scunet_gray_50",
+    DenoiseModel.COLOR_15: "scunet_color_15",
+    DenoiseModel.COLOR_25: "scunet_color_25",
+    DenoiseModel.COLOR_50: "scunet_color_50",
+    DenoiseModel.PSNR: "scunet_color_real_psnr",
+    DenoiseModel.GAN: "scunet_color_real_gan",
+}
 
 
 def load_model(model_name, model_path, device, n_channels: int = 3):
@@ -27,16 +51,18 @@ def load_model(model_name, model_path, device, n_channels: int = 3):
     return model
 
 
-def get_model_path(strength: int) -> Path:
+def get_model_path(model: DenoiseModel) -> tuple[str, Path]:
+    model_name = _MODEL_NAMES[model]
     return (
-        Path(__file__).resolve().parent / f"model/weights/scunet_color_{strength}.pth"
+        model_name,
+        Path(__file__).resolve().parent / f"model/weights/{model_name}.pth",
     )
 
 
-def denoise(img, strength: int = 15):
+def denoise(img, model: DenoiseModel):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_path = get_model_path(strength)
-    model = load_model(f"scunet_color_{strength}", model_path, device)
+    model_name, model_path = get_model_path(model)
+    model = load_model(model_name, model_path, device)
     img = image_to_tensor(img).to(device)
     with torch.inference_mode():
         out = model(img)

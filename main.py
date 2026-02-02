@@ -4,7 +4,7 @@ import time
 import cv2 as cv
 import numpy as np
 
-from image_enhancement.scunet import denoise
+from image_enhancement.scunet import denoise, DenoiseModel
 from image_enhancement.upscaler import upscale
 
 
@@ -39,12 +39,20 @@ def get_args() -> argparse.Namespace:
         help="Processing mode",
     )
     parser.add_argument(
+        "--denoise-type",
+        choices=["gray", "color", "psnr", "gan"],
+        default="psnr",
+        help="Denoiser variant",
+    )
+
+    parser.add_argument(
         "--strength",
         type=int,
         choices=[15, 25, 50],
         default=15,
-        help="Denoising strength (only used in denoise mode)",
+        help="Denoising strength (gray/color only)",
     )
+
     return parser.parse_args()
 
 
@@ -59,9 +67,36 @@ def process_image(img: np.ndarray, args: argparse.Namespace) -> np.ndarray:
         return upscale(img, args.model, args.size)
 
     if args.mode == "denoise":
-        return denoise(img, strength=args.strength)
+        model = resolve_denoise_model(args)
+        return denoise(img, model=model)
 
     raise ValueError(f"Unsupported mode: {args.mode}")
+
+
+def resolve_denoise_model(args: argparse.Namespace) -> DenoiseModel:
+    t = args.denoise_type
+
+    if t == "psnr":
+        return DenoiseModel.PSNR
+
+    if t == "gan":
+        return DenoiseModel.GAN
+
+    if t == "gray":
+        return {
+            15: DenoiseModel.GRAY_15,
+            25: DenoiseModel.GRAY_25,
+            50: DenoiseModel.GRAY_50,
+        }[args.strength]
+
+    if t == "color":
+        return {
+            15: DenoiseModel.COLOR_15,
+            25: DenoiseModel.COLOR_25,
+            50: DenoiseModel.COLOR_50,
+        }[args.strength]
+
+    raise ValueError(f"Unsupported denoise type: {t}")
 
 
 def main() -> None:
